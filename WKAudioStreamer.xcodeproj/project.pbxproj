@@ -13,6 +13,9 @@
 		4691A1EA1641BF9600698DA3 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1E81641BF9600698DA3 /* Credits.rtf */; };
 		4691A1ED1641BF9600698DA3 /* WKAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */; };
 		4691A1F01641BF9600698DA3 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1EE1641BF9600698DA3 /* MainMenu.xib */; };
+		4691A1F81641EE4D00698DA3 /* WKAudioStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */; };
+		4691A1FC1641EEAD00698DA3 /* WKController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1FB1641EEAD00698DA3 /* WKController.m */; };
+		46D677671644BB8D004D31BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 46D677661644BB8D004D31BE /* README.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +32,11 @@
 		4691A1EB1641BF9600698DA3 /* WKAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WKAppDelegate.h; sourceTree = "<group>"; };
 		4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WKAppDelegate.m; sourceTree = "<group>"; };
 		4691A1EF1641BF9600698DA3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		4691A1F61641EE4D00698DA3 /* WKAudioStreamer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKAudioStreamer.h; sourceTree = SOURCE_ROOT; };
+		4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKAudioStreamer.m; sourceTree = SOURCE_ROOT; };
+		4691A1FA1641EEAD00698DA3 /* WKController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKController.h; sourceTree = "<group>"; };
+		4691A1FB1641EEAD00698DA3 /* WKController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKController.m; sourceTree = "<group>"; };
+		46D677661644BB8D004D31BE /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,10 +90,10 @@
 		4691A1DF1641BF9600698DA3 /* WKAudioStreamer */ = {
 			isa = PBXGroup;
 			children = (
-				4691A1EB1641BF9600698DA3 /* WKAppDelegate.h */,
-				4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */,
-				4691A1EE1641BF9600698DA3 /* MainMenu.xib */,
-				4691A1E01641BF9600698DA3 /* Supporting Files */,
+				4691A1F61641EE4D00698DA3 /* WKAudioStreamer.h */,
+				4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */,
+				46D677661644BB8D004D31BE /* README.md */,
+				4691A1F91641EE7E00698DA3 /* Test Program */,
 			);
 			path = WKAudioStreamer;
 			sourceTree = "<group>";
@@ -100,6 +108,19 @@
 				4691A1E81641BF9600698DA3 /* Credits.rtf */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4691A1F91641EE7E00698DA3 /* Test Program */ = {
+			isa = PBXGroup;
+			children = (
+				4691A1EB1641BF9600698DA3 /* WKAppDelegate.h */,
+				4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */,
+				4691A1FA1641EEAD00698DA3 /* WKController.h */,
+				4691A1FB1641EEAD00698DA3 /* WKController.m */,
+				4691A1EE1641BF9600698DA3 /* MainMenu.xib */,
+				4691A1E01641BF9600698DA3 /* Supporting Files */,
+			);
+			name = "Test Program";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -157,6 +178,7 @@
 				4691A1E41641BF9600698DA3 /* InfoPlist.strings in Resources */,
 				4691A1EA1641BF9600698DA3 /* Credits.rtf in Resources */,
 				4691A1F01641BF9600698DA3 /* MainMenu.xib in Resources */,
+				46D677671644BB8D004D31BE /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -169,6 +191,8 @@
 			files = (
 				4691A1E61641BF9600698DA3 /* main.m in Sources */,
 				4691A1ED1641BF9600698DA3 /* WKAppDelegate.m in Sources */,
+				4691A1F81641EE4D00698DA3 /* WKAudioStreamer.m in Sources */,
+				4691A1FC1641EEAD00698DA3 /* WKController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,6 +322,7 @@
 				4691A1F51641BF9600698DA3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
