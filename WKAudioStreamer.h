@@ -19,15 +19,15 @@
 
 @protocol WKAudioStreamerDelegate;
 
-/////////////////////////////////////////////////
-/////////////////// WKDataPair //////////////////
-/////////////////////////////////////////////////
-
-@interface WKDataPair : NSObject
-@property id v1;
-@property id v2;
-+ (id)pairWithData:(id)v1 And:(id)v2;
-@end
+///////////////////////////////////////////////////
+///////////////////// WKDataPair //////////////////
+///////////////////////////////////////////////////
+//
+//@interface WKDataPair : NSObject
+//@property id v1;
+//@property id v2;
+//+ (id)pairWithData:(id)v1 And:(id)v2;
+//@end
 
 /////////////////////////////////////////////////
 //////////////// WKAudioStreamer ////////////////
@@ -36,6 +36,12 @@
 @interface WKAudioStreamer : NSObject {
 @private
     id<WKAudioStreamerDelegate> delegate;
+    NSURL *songUrl;
+    NSURLConnection *connection;
+    BOOL isMetaDataReady;
+    double availRangeFrom;
+    double availRangeTo;
+    NSMutableArray *dataList;
 }
 
 // streaming will not start right after the streamer is created.
@@ -57,7 +63,8 @@
 // in the object will be thrown away.
 //
 // *** important ***
-// this might be called when streaming has not started yet...
+// if you call seek before streaming has started,
+// the seeking request will be simply ignored.
 - (BOOL)seek:(double)targetTime;
 
 //////////////////////////
@@ -68,9 +75,9 @@
 // but why would anyone want to pause and then resume?
 - (void)startStreaming;
 
-// return a pair of doubles (packed in NSNumber) indicating the
-// range of time where data is available.
-- (WKDataPair *)availableRange;
+// // return a pair of doubles (packed in NSNumber) indicating the
+// // range of time where data is available.
+// - (WKDataPair *)availableRange;
 
 @end
 
@@ -85,9 +92,13 @@
 // data could be nil in the case where seeking to
 // unstreamed parts was requested.
 - (void)onStreamingFinished:(WKAudioStreamer *)streamer
-                       data:(NSData *)data;
+                   fullData:(NSArray *)dataList;
 
-- (void)onDataReceived:(NSData *)data;
+- (void)onPlayingFinished;
+
+- (void)onDataReceived:(NSData *)newData
+        availRangeFrom:(double)s
+                    to:(double)e;
 
 @optional
 - (void)onErrorOccured:(NSError *)error;

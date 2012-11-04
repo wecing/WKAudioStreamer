@@ -7,14 +7,45 @@
 //
 
 #import "WKController.h"
-#import "WKAudioStreamer.h"
 
 static WKAudioStreamer *as = nil;
 
 @implementation WKController
 
 - (IBAction)play:(id)sender {
-    NSLog(@"%@", [[self urlField] stringValue]);
+    NSString *url = [[self urlField] stringValue];
+    NSLog(@"%@", url); // DEBUG
+    
+    if (as == nil) {
+        as = [WKAudioStreamer streamerWithURLString:url delegate:self];
+        [as startStreaming];
+    }
+    NSLog(@"%@", as); // DEBUG
+}
+
+/////////////////////////////////////////////////
+//////////////// delegate methods ///////////////
+/////////////////////////////////////////////////
+
+- (void)onStreamingFinished:(WKAudioStreamer *)streamer
+                   fullData:(NSData *)data {
+    NSLog(@"streaming finished"); // DEBUG
+}
+
+- (void)onPlayingFinished {
+    NSLog(@"playing finished"); // DEBUG
+    as = nil;
+}
+
+- (void)onDataReceived:(NSData *)newData
+        availRangeFrom:(double)s
+                    to:(double)e{
+    // NSLog(@"new data: %@; avail range: %lf - %lf", newData, s, e);
+    NSLog(@"%@", [[NSString alloc] initWithData:newData encoding:NSASCIIStringEncoding]);
+}
+
+- (void)onErrorOccured:(NSError *)error {
+    NSLog(@"%@", error);
 }
 
 @end

@@ -7,8 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "WKAudioStreamer.h"
 
-@interface WKController : NSObject
+@interface WKController : NSObject <WKAudioStreamerDelegate>
 
 @property IBOutlet NSTextField *urlField;
 
