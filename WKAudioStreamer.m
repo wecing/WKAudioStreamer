@@ -81,7 +81,17 @@
 // what should I do if streaming just stopped and just resend the request will fix?
 // (before receiving any data or during streaming)
 - (void)startStreaming {
-    NSURLRequest *req = [NSURLRequest requestWithURL:songUrl];
+    // without setting User-Agent to empty string, the full HTTP request header is:
+    //
+    // GET /4/145/63845/537161/01_1771257374_3640897.mp3 HTTP/1.1
+    // Host: f3.xiami.net
+    // User-Agent: WKAudioStreamer/1 CFNetwork/596.2.3 Darwin/12.2.0 (x86_64) (MacBookAir3%2C2)
+    // Accept: */*
+    // Accept-Language: en-us
+    // Accept-Encoding: gzip, deflate
+    // Connection: keep-alive
+    NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:songUrl];
+    [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
     connection = [NSURLConnection connectionWithRequest:req delegate:self];
 }
 

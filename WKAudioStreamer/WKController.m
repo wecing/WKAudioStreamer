@@ -40,8 +40,8 @@ static WKAudioStreamer *as = nil;
 - (void)onDataReceived:(NSData *)newData
         availRangeFrom:(double)s
                     to:(double)e{
-    // NSLog(@"new data: %@; avail range: %lf - %lf", newData, s, e);
-    NSLog(@"%@", [[NSString alloc] initWithData:newData encoding:NSASCIIStringEncoding]);
+    NSLog(@"new data! avail range: %lf - %lf", s, e);
+    // NSLog(@"%@", [[NSString alloc] initWithData:newData encoding:NSASCIIStringEncoding]);
 }
 
 - (void)onErrorOccured:(NSError *)error {
