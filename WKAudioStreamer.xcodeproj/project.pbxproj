@@ -16,6 +16,7 @@
 		4691A1F81641EE4D00698DA3 /* WKAudioStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */; };
 		4691A1FC1641EEAD00698DA3 /* WKController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1FB1641EEAD00698DA3 /* WKController.m */; };
 		46D677671644BB8D004D31BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 46D677661644BB8D004D31BE /* README.md */; };
+		46FDB75E164B5E98004569C9 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46FDB75D164B5E98004569C9 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +38,7 @@
 		4691A1FA1641EEAD00698DA3 /* WKController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKController.h; sourceTree = "<group>"; };
 		4691A1FB1641EEAD00698DA3 /* WKController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKController.m; sourceTree = "<group>"; };
 		46D677661644BB8D004D31BE /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
+		46FDB75D164B5E98004569C9 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				46FDB75E164B5E98004569C9 /* AudioToolbox.framework in Frameworks */,
 				4691A1DA1641BF9600698DA3 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -54,6 +57,7 @@
 		4691A1CA1641BF9600698DA3 = {
 			isa = PBXGroup;
 			children = (
+				46FDB75D164B5E98004569C9 /* AudioToolbox.framework */,
 				4691A1DF1641BF9600698DA3 /* WKAudioStreamer */,
 				4691A1D81641BF9600698DA3 /* Frameworks */,
 				4691A1D61641BF9600698DA3 /* Products */,

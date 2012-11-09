@@ -7,27 +7,16 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <AudioToolbox/AudioToolbox.h>
+
 
 // WKAudioStreamer does more than a streamer.
 // It will also play the audio file it's streaming.
 // 
 // The client can control when to stream/play.
 
-/////////////////////////////////////////////////
-//////////////// code starts here ///////////////
-/////////////////////////////////////////////////
 
 @protocol WKAudioStreamerDelegate;
-
-///////////////////////////////////////////////////
-///////////////////// WKDataPair //////////////////
-///////////////////////////////////////////////////
-//
-//@interface WKDataPair : NSObject
-//@property id v1;
-//@property id v2;
-//+ (id)pairWithData:(id)v1 And:(id)v2;
-//@end
 
 /////////////////////////////////////////////////
 //////////////// WKAudioStreamer ////////////////
@@ -42,6 +31,25 @@
     double availRangeFrom;
     double availRangeTo;
     NSMutableArray *dataList;
+    AudioFileStreamID afsID;
+
+    
+    // helper variables used for seeking
+
+    
+    AudioStreamBasicDescription *streamDesc;
+    SInt64 dataOffset;
+    UInt64 fileSize;
+    
+    // processed packets,
+    // number of frames in these packets,
+    // total size of them.
+    // 
+    UInt64 packetCount, frameCount;//, sizeCount;
+    
+    // bit rate fetched from metadata.
+    // supposed to be used only through getter/setter methods. (whyyyyy?)
+    UInt32 _bitRate;
 }
 
 // streaming will not start right after the streamer is created.
@@ -56,6 +64,8 @@
 - (void)play;
 - (void)pause;
 - (void)stop;
+
+- (double)duration;
 
 // seek to the target time.
 //

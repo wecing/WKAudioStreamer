@@ -14,13 +14,13 @@ static WKAudioStreamer *as = nil;
 
 - (IBAction)play:(id)sender {
     NSString *url = [[self urlField] stringValue];
-    NSLog(@"%@", url); // DEBUG
+    // NSLog(@"%@", url); // DEBUG
     
     if (as == nil) {
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         [as startStreaming];
     }
-    NSLog(@"%@", as); // DEBUG
+    // NSLog(@"%@", as); // DEBUG
 }
 
 /////////////////////////////////////////////////
@@ -28,8 +28,8 @@ static WKAudioStreamer *as = nil;
 /////////////////////////////////////////////////
 
 - (void)onStreamingFinished:(WKAudioStreamer *)streamer
-                   fullData:(NSData *)data {
-    NSLog(@"streaming finished"); // DEBUG
+                   fullData:(NSArray *)dataList {
+    NSLog(@"streaming finished. data length: %ld", [dataList count]); // DEBUG
 }
 
 - (void)onPlayingFinished {
@@ -39,8 +39,9 @@ static WKAudioStreamer *as = nil;
 
 - (void)onDataReceived:(NSData *)newData
         availRangeFrom:(double)s
-                    to:(double)e{
-    NSLog(@"new data! avail range: %lf - %lf", s, e);
+                    to:(double)e {
+    // NSLog(@"duration: %.2lfs", [as duration]);
+    // NSLog(@"new data! avail range: %lf - %lf", s, e);
     // NSLog(@"%@", [[NSString alloc] initWithData:newData encoding:NSASCIIStringEncoding]);
 }
 
