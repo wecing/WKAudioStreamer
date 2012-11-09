@@ -163,10 +163,14 @@ void decoded_properties_cb(void                         *inClientData,
         // sample rate: frames / sec
         Float64 sample_rate = streamDesc->mSampleRate;
         
-        Float64 bytes_per_frame;
+        Float64 bytes_per_frame = 0;
         if (sample_rate != 0.0f) {
             // (bytes/packet) / (frames/packet) = bytes/frame
-            bytes_per_frame = [self bytesPerPacket] / [self framesPerPacket];
+            Float64 bytes_per_packet = [self bytesPerPacket];
+            Float64 frames_per_packet = [self framesPerPacket];
+            if (bytes_per_packet != 0 && frames_per_packet != 0) {
+                bytes_per_frame = bytes_per_frame / frames_per_packet;
+            }
         }
         
         // (bytes/frame) * (frames/sec) * 8 = bits/sec
@@ -185,7 +189,11 @@ void decoded_properties_cb(void                         *inClientData,
         return streamDesc->mFramesPerPacket;
     }
     
-    return (Float64)frameCount / packetCount;
+    if (packetCount != 0) {
+        return (Float64)frameCount / packetCount;
+    }
+    
+    return 0;
 }
 
 - (Float64)bytesPerPacket {
