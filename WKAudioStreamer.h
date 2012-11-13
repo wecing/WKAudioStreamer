@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
+#define AQBUF_N 5
 
 // WKAudioStreamer does more than a streamer.
 // It will also play the audio file it's streaming.
@@ -27,19 +28,33 @@
     id<WKAudioStreamerDelegate> delegate;
     NSURL *songUrl;
     NSURLConnection *connection;
-    BOOL isMetaDataReady;
-    double availRangeFrom;
-    double availRangeTo;
-    NSMutableArray *dataList;
+    // BOOL isMetaDataReady;
+    // double availRangeFrom;
+    // double availRangeTo;
+    // NSMutableArray *dataList;
     AudioFileStreamID afsID;
-
+    AudioQueueRef aqRef;
+    AudioQueueBufferRef aqBufRef[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
+    BOOL aqStarted;
+    
+    NSMutableArray *emptyQueueBuffers; // L1
+    NSMutableArray *parsedPackets;     // L2
+    NSMutableArray *availRawData;      // L3
+    NSUInteger aqBufsSize;           // L1.SIZE
+    NSUInteger parsedPacketsSize;    // L2.SIZE
+    // NSUInteger notUsedAvailDataSize; // L3.SIZE
+    NSUInteger curUsingRawDataIdx;   // L3.curIdx
+    NSMutableArray *parsedPacketsDesc; // L2's info; this is used when enqueuing.
+    BOOL playerPlaying;
+    BOOL streamingFinished;
     
     // helper variables used for seeking
-
     
     AudioStreamBasicDescription *streamDesc;
     SInt64 dataOffset;
     UInt64 fileSize;
+    UInt32 maxAQBufferSize;
+    BOOL finishedParsingHeader;
     
     // processed packets,
     // number of frames in these packets,

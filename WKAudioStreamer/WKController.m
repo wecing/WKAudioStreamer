@@ -19,6 +19,7 @@ static WKAudioStreamer *as = nil;
     if (as == nil) {
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         [as startStreaming];
+        [as play];
     }
     // NSLog(@"%@", as); // DEBUG
 }
