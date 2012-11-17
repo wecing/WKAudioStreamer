@@ -14,40 +14,44 @@ static WKAudioStreamer *as = nil;
 
 - (IBAction)play:(id)sender {
     NSString *url = [[self urlField] stringValue];
-    // NSLog(@"%@", url); // DEBUG
+    NSLog(@"\n-> requested url: %@", url); // DEBUG
     
     if (as == nil) {
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         [as startStreaming];
+        NSLog(@"\n-> streaming started."); // DEBUG
+        
         [as play];
+        NSLog(@"\n-> playing started."); // DEBUG
     }
-    // NSLog(@"%@", as); // DEBUG
 }
 
 /////////////////////////////////////////////////
 //////////////// delegate methods ///////////////
 /////////////////////////////////////////////////
 
-- (void)onStreamingFinished:(WKAudioStreamer *)streamer
-                   fullData:(NSArray *)dataList {
-    NSLog(@"streaming finished. data length: %ld", [dataList count]); // DEBUG
+- (void)onStreamingFinished:(WKAudioStreamer *)streamer {
+    NSLog(@"\n-> streaming finished."); // DEBUG
 }
 
-- (void)onPlayingFinished {
-    NSLog(@"playing finished"); // DEBUG
+- (void)onPlayingFinished:(WKAudioStreamer *)streamer {
+    NSLog(@"\n-> playing finished."); // DEBUG
     as = nil;
 }
 
-- (void)onDataReceived:(NSData *)newData
-        availRangeFrom:(double)s
-                    to:(double)e {
-    // NSLog(@"duration: %.2lfs", [as duration]);
-    // NSLog(@"new data! avail range: %lf - %lf", s, e);
-    // NSLog(@"%@", [[NSString alloc] initWithData:newData encoding:NSASCIIStringEncoding]);
+- (void)onDataReceived:(WKAudioStreamer *)streamer
+                  data:(NSData *)newData {
+    // DEBUG
+    static BOOL debug_info_printed = NO;
+    if (!debug_info_printed) {
+        NSLog(@"\n-> streaming data...");
+        debug_info_printed = YES;
+    }
 }
 
-- (void)onErrorOccured:(NSError *)error {
-    NSLog(@"%@", error);
+- (void)onErrorOccured:(WKAudioStreamer *)streamer
+                 error:(NSError *)error {
+    NSLog(@"\n-> %@", error);
 }
 
 @end

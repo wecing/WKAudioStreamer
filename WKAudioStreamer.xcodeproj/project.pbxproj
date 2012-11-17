@@ -7,19 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4669A7031656FB87004A075B /* implementation_details.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4669A7021656FB87004A075B /* implementation_details.txt */; };
+		4669A7071656FC4E004A075B /* WKAudioStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4669A7061656FC4E004A075B /* WKAudioStreamer.m */; };
 		4691A1DA1641BF9600698DA3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4691A1D91641BF9600698DA3 /* Cocoa.framework */; };
 		4691A1E41641BF9600698DA3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1E21641BF9600698DA3 /* InfoPlist.strings */; };
 		4691A1E61641BF9600698DA3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1E51641BF9600698DA3 /* main.m */; };
 		4691A1EA1641BF9600698DA3 /* Credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1E81641BF9600698DA3 /* Credits.rtf */; };
 		4691A1ED1641BF9600698DA3 /* WKAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */; };
 		4691A1F01641BF9600698DA3 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1EE1641BF9600698DA3 /* MainMenu.xib */; };
-		4691A1F81641EE4D00698DA3 /* WKAudioStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */; };
 		4691A1FC1641EEAD00698DA3 /* WKController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4691A1FB1641EEAD00698DA3 /* WKController.m */; };
 		46D677671644BB8D004D31BE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 46D677661644BB8D004D31BE /* README.md */; };
 		46FDB75E164B5E98004569C9 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46FDB75D164B5E98004569C9 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		4669A7021656FB87004A075B /* implementation_details.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = implementation_details.txt; sourceTree = SOURCE_ROOT; };
+		4669A7051656FC4E004A075B /* WKAudioStreamer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKAudioStreamer.h; sourceTree = SOURCE_ROOT; };
+		4669A7061656FC4E004A075B /* WKAudioStreamer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKAudioStreamer.m; sourceTree = SOURCE_ROOT; };
 		4691A1D51641BF9600698DA3 /* WKAudioStreamer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WKAudioStreamer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4691A1D91641BF9600698DA3 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		4691A1DC1641BF9600698DA3 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -33,8 +37,6 @@
 		4691A1EB1641BF9600698DA3 /* WKAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WKAppDelegate.h; sourceTree = "<group>"; };
 		4691A1EC1641BF9600698DA3 /* WKAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = WKAppDelegate.m; sourceTree = "<group>"; };
 		4691A1EF1641BF9600698DA3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
-		4691A1F61641EE4D00698DA3 /* WKAudioStreamer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKAudioStreamer.h; sourceTree = SOURCE_ROOT; };
-		4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKAudioStreamer.m; sourceTree = SOURCE_ROOT; };
 		4691A1FA1641EEAD00698DA3 /* WKController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKController.h; sourceTree = "<group>"; };
 		4691A1FB1641EEAD00698DA3 /* WKController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKController.m; sourceTree = "<group>"; };
 		46D677661644BB8D004D31BE /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = SOURCE_ROOT; };
@@ -94,8 +96,9 @@
 		4691A1DF1641BF9600698DA3 /* WKAudioStreamer */ = {
 			isa = PBXGroup;
 			children = (
-				4691A1F61641EE4D00698DA3 /* WKAudioStreamer.h */,
-				4691A1F71641EE4D00698DA3 /* WKAudioStreamer.m */,
+				4669A7021656FB87004A075B /* implementation_details.txt */,
+				4669A7051656FC4E004A075B /* WKAudioStreamer.h */,
+				4669A7061656FC4E004A075B /* WKAudioStreamer.m */,
 				46D677661644BB8D004D31BE /* README.md */,
 				4691A1F91641EE7E00698DA3 /* Test Program */,
 			);
@@ -183,6 +186,7 @@
 				4691A1EA1641BF9600698DA3 /* Credits.rtf in Resources */,
 				4691A1F01641BF9600698DA3 /* MainMenu.xib in Resources */,
 				46D677671644BB8D004D31BE /* README.md in Resources */,
+				4669A7031656FB87004A075B /* implementation_details.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -195,8 +199,8 @@
 			files = (
 				4691A1E61641BF9600698DA3 /* main.m in Sources */,
 				4691A1ED1641BF9600698DA3 /* WKAppDelegate.m in Sources */,
-				4691A1F81641EE4D00698DA3 /* WKAudioStreamer.m in Sources */,
 				4691A1FC1641EEAD00698DA3 /* WKController.m in Sources */,
+				4669A7071656FC4E004A075B /* WKAudioStreamer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

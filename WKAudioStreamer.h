@@ -2,107 +2,57 @@
 //  WKAudioStreamer.h
 //  WKAudioStreamer
 //
-//  Created by Chenguang Wang on 10/31/12.
+//  Created by Chenguang Wang on 11/16/12.
 //  Copyright (c) 2012 Chenguang Wang. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-#define AQBUF_N 5
-
-// WKAudioStreamer does more than a streamer.
-// It will also play the audio file it's streaming.
-// 
-// The client can control when to stream/play.
-
+#define AQBUF_N  3
+#define AQBUF_DEFAULT_SIZE  0x25000 // 160kb
 
 @protocol WKAudioStreamerDelegate;
 
-/////////////////////////////////////////////////
-//////////////// WKAudioStreamer ////////////////
-/////////////////////////////////////////////////
-
 @interface WKAudioStreamer : NSObject {
 @private
-    id<WKAudioStreamerDelegate> delegate;
-    NSURL *songUrl;
-    NSURLConnection *connection;
-    // BOOL isMetaDataReady;
-    // double availRangeFrom;
-    // double availRangeTo;
-    // NSMutableArray *dataList;
-    AudioFileStreamID afsID;
-    AudioQueueRef aqRef;
-    AudioQueueBufferRef aqBufRef[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
-    BOOL aqStarted;
+    id<WKAudioStreamerDelegate> _delegate;
+    NSString *_url;
     
-    NSMutableArray *emptyQueueBuffers; // L1
-    NSMutableArray *parsedPackets;     // L2
-    NSMutableArray *availRawData;      // L3
-    NSUInteger aqBufsSize;           // L1.SIZE
-    NSUInteger parsedPacketsSize;    // L2.SIZE
-    // NSUInteger notUsedAvailDataSize; // L3.SIZE
-    NSUInteger curUsingRawDataIdx;   // L3.curIdx
-    NSMutableArray *parsedPacketsDesc; // L2's info; this is used when enqueuing.
-    BOOL playerPlaying;
-    BOOL streamingFinished;
+    NSURLConnection *_connection;
     
-    // helper variables used for seeking
+    AudioFileStreamID _afsID;
+    // AudioQueueRef _aq;
+    // AudioQueueBufferRef _aqBufs[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
     
-    AudioStreamBasicDescription *streamDesc;
-    SInt64 dataOffset;
-    UInt64 fileSize;
-    UInt32 maxAQBufferSize;
-    BOOL finishedParsingHeader;
+    NSMutableArray *_emptyQueueBuffers;
+    NSMutableArray *_parsedPackets;
     
-    // processed packets,
-    // number of frames in these packets,
-    // total size of them.
-    // 
-    UInt64 packetCount, frameCount;//, sizeCount;
+    int _fileSize;
+    BOOL _finishedParsingHeader;
+    AudioStreamBasicDescription *_streamDesc;
     
-    // bit rate fetched from metadata.
-    // supposed to be used only through getter/setter methods. (whyyyyy?)
+    unsigned int _packetCount;
+    unsigned int _frameCount;
     UInt32 _bitRate;
+    SInt64 _dataOffset;
 }
 
 // streaming will not start right after the streamer is created.
-// the user would have to call start by hand.
+// the user would have to call startStreaming by hand.
 + (id)streamerWithURLString:(NSString *)url
                    delegate:(id<WKAudioStreamerDelegate>)delegate;
 
-////////////////////////
-/// the player APIs: ///
-////////////////////////
-
 - (void)play;
 - (void)pause;
-- (void)stop;
+
+// if seek returns YES, it means later data received by the delegate will not be continuous
+// with the previous ones -- which means you cannot save them onto your disk as a single file anymore.
+- (BOOL)seek:(double)targetTime;
 
 - (double)duration;
 
-// seek to the target time.
-//
-// if data at targetTime is not streamed, all data already stored
-// in the object will be thrown away.
-//
-// *** important ***
-// if you call seek before streaming has started,
-// the seeking request will be simply ignored.
-- (BOOL)seek:(double)targetTime;
-
-//////////////////////////
-/// the streamer APIs: ///
-//////////////////////////
-
-// once started, no way to pause...
-// but why would anyone want to pause and then resume?
 - (void)startStreaming;
-
-// // return a pair of doubles (packed in NSNumber) indicating the
-// // range of time where data is available.
-// - (WKDataPair *)availableRange;
 
 @end
 
@@ -113,19 +63,14 @@
 @protocol WKAudioStreamerDelegate <NSObject>
 
 @required
-// called when streaming has finished.
-// data could be nil in the case where seeking to
-// unstreamed parts was requested.
-- (void)onStreamingFinished:(WKAudioStreamer *)streamer
-                   fullData:(NSArray *)dataList;
+- (void)onStreamingFinished:(WKAudioStreamer *)streamer;
+- (void)onPlayingFinished:(WKAudioStreamer *)streamer;
 
-- (void)onPlayingFinished;
-
-- (void)onDataReceived:(NSData *)newData
-        availRangeFrom:(double)s
-                    to:(double)e;
+- (void)onDataReceived:(WKAudioStreamer *)streamer
+                  data:(NSData *)newData;
 
 @optional
-- (void)onErrorOccured:(NSError *)error;
+- (void)onErrorOccured:(WKAudioStreamer *)streamer
+                 error:(NSError *)error;
 
 @end

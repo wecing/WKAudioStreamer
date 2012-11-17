@@ -1,0 +1,65 @@
+ WKAudioStreamer only stores the audio data part as parsed packets.
+ Clients could get the original full data (including audio header, ...) with the delegate method onDataReceived:availFrom:to.
+
+ WKAudioStreamer uses a two layer caching structure:
+ L1: emptyQueueBuffers
+ L2: parsedPackets
+
+ initial values:
+ BOOL audioQueuePaused = YES              set to YES iff:    L2.next == nil and L1.n == AQBUF_N   ("no data" in L1,L2)
+                                                          or playerPlaying = NO                   (paused/finished)
+ BOOL playerPlaying = NO
+ BOOL finishedFeedingParser = NO          set to YES iff:    no new incoming data from HTTP connection
+ BOOL streamerRunning = NO
+
+ L1's callback:
+ onNewEmptyQueueBufferReceived:      @synchronized (self)
+     push new data onto L1
+     feedL1()
+
+ L2's callback:
+ onParsedPacketsReceived:            @synchronized (self)
+     push new data onto L2
+     feedL1()
+
+ feedL1:                             @synchronized (self)
+     while L2.next != nil and L1.n != 0:
+         buf <- L1.pop()
+         if L2.next.size > buf.capacity:
+             free & allocate buf
+         while L2.next != nil:
+             fill in buf with L2
+             L2.next = L2.next.next
+         enqueue buf
+         if audioQueuePaused and playerPlaying:
+             audioQueue.start()
+             audioQueuePaused = NO
+     if L2.next == nil and L1.n == AQBUF_N:                      // no data in L1,L2
+         if !audioQueuePaused and playerPlaying:                 // not paused by user, audio queue still playing
+             audioQueuePaused = YES
+             audioQueue.pause()
+             if finishedFeedingParser:                           // also no incoming data
+                 playerPlaying = NO
+                 set L2.current to L2.head
+                 send onPlayingFinished to delegate
+
+ play:                               @synchronized (self)
+     if playerPlaying: // still playing (maybe still waiting for data)
+         return
+     if !streamerRunning and !finishedFeedingParser:
+         startStreaming
+     playerPlaying = YES
+     if L2.next != nil and L1.n != AQBUF_N: // previously paused by user
+         audioQueue.start()
+         audioQueuePaused = NO
+
+ connection:didReceiveData:          @synchronized (self)
+     feed parser
+     send onDataReceived to delegate
+
+ connectionDidFinishedLoading:       @synchronized (self)
+     finishedFeedingParser = YES                                 // no new incoming data
+     if audioQueuePaused and playerPlaying:                      // no data in L1,L2; not paused by user
+         playerPlaying = NO
+         set L2.current to L2.head
+         send onPlayerFinished to delegate
