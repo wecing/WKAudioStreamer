@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		4669A7031656FB87004A075B /* implementation_details.txt in Resources */ = {isa = PBXBuildFile; fileRef = 4669A7021656FB87004A075B /* implementation_details.txt */; };
 		4669A7071656FC4E004A075B /* WKAudioStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4669A7061656FC4E004A075B /* WKAudioStreamer.m */; };
 		4691A1DA1641BF9600698DA3 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4691A1D91641BF9600698DA3 /* Cocoa.framework */; };
 		4691A1E41641BF9600698DA3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4691A1E21641BF9600698DA3 /* InfoPlist.strings */; };
@@ -21,7 +20,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		4669A7021656FB87004A075B /* implementation_details.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = implementation_details.txt; sourceTree = SOURCE_ROOT; };
 		4669A7051656FC4E004A075B /* WKAudioStreamer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKAudioStreamer.h; sourceTree = SOURCE_ROOT; };
 		4669A7061656FC4E004A075B /* WKAudioStreamer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WKAudioStreamer.m; sourceTree = SOURCE_ROOT; };
 		4691A1D51641BF9600698DA3 /* WKAudioStreamer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WKAudioStreamer.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -96,7 +94,6 @@
 		4691A1DF1641BF9600698DA3 /* WKAudioStreamer */ = {
 			isa = PBXGroup;
 			children = (
-				4669A7021656FB87004A075B /* implementation_details.txt */,
 				4669A7051656FC4E004A075B /* WKAudioStreamer.h */,
 				4669A7061656FC4E004A075B /* WKAudioStreamer.m */,
 				46D677661644BB8D004D31BE /* README.md */,
@@ -186,7 +183,6 @@
 				4691A1EA1641BF9600698DA3 /* Credits.rtf in Resources */,
 				4691A1F01641BF9600698DA3 /* MainMenu.xib in Resources */,
 				46D677671644BB8D004D31BE /* README.md in Resources */,
-				4669A7031656FB87004A075B /* implementation_details.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

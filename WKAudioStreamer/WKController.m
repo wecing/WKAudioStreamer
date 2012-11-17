@@ -13,16 +13,25 @@ static WKAudioStreamer *as = nil;
 @implementation WKController
 
 - (IBAction)play:(id)sender {
-    NSString *url = [[self urlField] stringValue];
-    NSLog(@"\n-> requested url: %@", url); // DEBUG
-    
     if (as == nil) {
+        NSString *url = [[self urlField] stringValue];
+        NSLog(@"\n-> requested url: %@", url); // DEBUG
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         [as startStreaming];
         NSLog(@"\n-> streaming started."); // DEBUG
-        
+    }
+    
+    NSButton *but = [self toggleButton];
+    if ([[but title] isEqualToString:@"Play"]) {
         [as play];
+        [but setTitle:@"Pause"];
+        
         NSLog(@"\n-> playing started."); // DEBUG
+    } else {
+        [as pause];
+        [but setTitle:@"Play"];
+        
+        NSLog(@"\n-> paused!"); // DEBUG
     }
 }
 
@@ -36,6 +45,7 @@ static WKAudioStreamer *as = nil;
 
 - (void)onPlayingFinished:(WKAudioStreamer *)streamer {
     NSLog(@"\n-> playing finished."); // DEBUG
+    [[self toggleButton] setTitle:@"Play"];
     as = nil;
 }
 

@@ -12,6 +12,7 @@
 @interface WKController : NSObject <WKAudioStreamerDelegate>
 
 @property IBOutlet NSTextField *urlField;
+@property IBOutlet NSButton *toggleButton;
 
 - (IBAction)play:(id)sender;
 

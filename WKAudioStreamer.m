@@ -8,6 +8,73 @@
 
 #import "WKAudioStreamer.h"
 
+// WKAudioStreamer only stores the audio data part as parsed packets.
+// Clients could get the original full data (including audio header, ...) with the delegate method onDataReceived:availFrom:to.
+//
+// WKAudioStreamer uses a two layer caching structure:
+// L1: emptyQueueBuffers
+// L2: parsedPackets
+//
+// initial values:
+// BOOL audioQueuePaused = YES              set to YES iff:    L2.next == nil and L1.n == AQBUF_N   ("no data" in L1,L2)
+//                                                          or playerPlaying = NO                   (paused/finished)
+// BOOL playerPlaying = NO
+// BOOL finishedFeedingParser = NO          set to YES iff:    no new incoming data from HTTP connection
+// BOOL streamerRunning = NO
+//
+// L1's callback:
+// onNewEmptyQueueBufferReceived:      @synchronized (self)
+//     push new data onto L1
+//     feedL1()
+//
+// L2's callback:
+// onParsedPacketsReceived:            @synchronized (self)
+//     push new data onto L2
+//     feedL1()
+//
+// feedL1:                             @synchronized (self)
+//     while L2.next != nil and L1.n != 0:
+//         buf <- L1.pop()
+//         if L2.next.size > buf.capacity:
+//             free & allocate buf
+//         while L2.next != nil:
+//             fill in buf with L2
+//             L2.next = L2.next.next
+//         enqueue buf
+//         if audioQueuePaused and playerPlaying:
+//             audioQueue.start()
+//             audioQueuePaused = NO
+//     if L2.next == nil and L1.n == AQBUF_N:                      // no data in L1,L2
+//         if !audioQueuePaused and playerPlaying:                 // not paused by user, audio queue still playing
+//             audioQueuePaused = YES
+//             audioQueue.pause()
+//             if finishedFeedingParser:                           // also no incoming data
+//                 playerPlaying = NO
+//                 set L2.current to L2.head
+//                 send onPlayingFinished to delegate
+//
+// play:                               @synchronized (self)
+//     if playerPlaying: // still playing (maybe still waiting for data)
+//         return
+//     if !streamerRunning and !finishedFeedingParser:
+//         startStreaming
+//     playerPlaying = YES
+//     if L2.next != nil and L1.n != AQBUF_N: // previously paused by user
+//         audioQueue.start()
+//         audioQueuePaused = NO
+//
+// connection:didReceiveData:          @synchronized (self)
+//     feed parser
+//     send onDataReceived to delegate
+//
+// connectionDidFinishedLoading:       @synchronized (self)
+//     finishedFeedingParser = YES                                 // no new incoming data
+//     if audioQueuePaused and playerPlaying:                      // no data in L1,L2; not paused by user
+//         playerPlaying = NO
+//         set L2.current to L2.head
+//         send onPlayerFinished to delegate
+
+
 @interface WKAudioStreamer ()
 // callbacks
 - (void)onParsedPacketsReceived:(const void *)d
@@ -16,7 +83,9 @@
              packetDescriptions:(AudioStreamPacketDescription *)packet_desc;
 - (void)onPropertyAcquired:(AudioFilePropertyID)ppt_id
          audioFileStreamID:(AudioFileStreamID)afs_id;
-// - (void)onNewEmptyQueueBufferReceived:(AudioQueueRef)inAQ buffer:(AudioQueueBufferRef)inBuffer;
+- (void)onNewEmptyQueueBufferReceived:(AudioQueueRef)inAQ buffer:(AudioQueueBufferRef)inBuffer;
+
+- (void)feedL1;
 
 // some helper methods used for seeking
 - (UInt32)bitRate;
@@ -44,6 +113,13 @@ static void afs_properties_cb(void                         *inClientData,
     [s onPropertyAcquired:inPropertyID audioFileStreamID:inAudioFileStream];
 }
 
+static void aq_new_buffer_cb(void                 *inUserData,
+                             AudioQueueRef        inAQ,
+                             AudioQueueBufferRef  inBuffer) {
+    WKAudioStreamer *s = (__bridge WKAudioStreamer *)inUserData;
+    [s onNewEmptyQueueBufferReceived:inAQ buffer:inBuffer];
+}
+
 //
 //
 // actual implementation
@@ -65,8 +141,12 @@ static void afs_properties_cb(void                         *inClientData,
     if (self != nil) {        
         _emptyQueueBuffers = [NSMutableArray new];
         _parsedPackets = [NSMutableArray new];
+        _packetsDesc = [NSMutableArray new];
         
         _dataOffset = -1;
+        _l2_curIdx = -1;
+        
+        _audioQueuePaused = YES;
     }
     return self;
 }
@@ -90,13 +170,47 @@ static void afs_properties_cb(void                         *inClientData,
 }
 
 - (void)play {
-    [self startStreaming];
-    
-    // FIXME
+    @synchronized(self) {
+        if (_playerPlaying) {
+            return;
+        }
+        
+        if (_connection == nil && !_finishedFeedingParser) {
+            [self startStreaming];
+        }
+        
+        _playerPlaying = YES;
+        
+        if (_aq == NULL && _streamDesc != NULL) {
+            // FIXME: error checking
+            AudioQueueNewOutput(_streamDesc, aq_new_buffer_cb, (__bridge void *)(self), NULL, NULL, 0, &_aq);
+            for (int i = 0; i < AQBUF_N; i++) {
+                AudioQueueAllocateBuffer(_aq, AQBUF_DEFAULT_SIZE, &_aqBufs[i]);
+                [_emptyQueueBuffers addObject:[NSData dataWithBytes:&_aqBufs[i] length:sizeof(AudioQueueBufferRef)]];
+            }
+        }
+        
+        // this should be able to handle the situation of:
+        //     1. previously paused
+        //     2. calling play after fully streamed
+        [self feedL1];
+        if (_audioQueuePaused && _aq != NULL) {
+            AudioQueueStart(_aq, NULL);
+            _audioQueuePaused = NO;
+        }
+    }
 }
 
 - (void)pause {
-    // FIXME
+    @synchronized(self) {
+        if (_playerPlaying) {
+            if (!_audioQueuePaused) {
+                AudioQueuePause(_aq);
+                _audioQueuePaused = YES;
+            }
+            _playerPlaying = NO;
+        }
+    }
 }
 
 - (BOOL)seek:(double)targetTime {
@@ -130,17 +244,35 @@ static void afs_properties_cb(void                         *inClientData,
 //
 // afs callbacks
 //
-- (void)onParsedPacketsReceived:(const void *)d
+
+// L2's callback
+- (void)onParsedPacketsReceived:(const void *)data
                   audioDataSize:(UInt32)d_size
                 numberOfPackets:(UInt32)packet_n
              packetDescriptions:(AudioStreamPacketDescription *)packet_desc {
     @autoreleasepool {
-        _packetCount += packet_n;
-        for (int i = 0; i < packet_n; i++) {
-            _frameCount += packet_desc[i].mVariableFramesInPacket;
+        @synchronized(self) {
+            _packetCount += packet_n;
+            for (int i = 0; i < packet_n; i++) {
+                _frameCount += packet_desc[i].mVariableFramesInPacket;
+            }
+            
+            // NSLog(@"\n-> bit rate: %u", [self bitRate]); // DEBUG
+            
+            // push data into L2
+            for (int i = 0; i < packet_n; i++) {
+                NSData *d = [NSData dataWithBytes:data+packet_desc[i].mStartOffset
+                                           length:packet_desc[i].mDataByteSize];
+                [_parsedPackets addObject:d];
+                
+                d = [NSData dataWithBytes:packet_desc+i
+                                   length:sizeof(AudioStreamPacketDescription)];
+                AudioStreamPacketDescription *ds = (AudioStreamPacketDescription *)[d bytes];
+                ds->mStartOffset = 0;
+                [_packetsDesc addObject:d];
+            }
         }
-        
-        // NSLog(@"\n-> bit rate: %u", [self bitRate]); // DEBUG
+        [self feedL1];
     }
 }
 
@@ -173,9 +305,18 @@ static void afs_properties_cb(void                         *inClientData,
         } else if (ppt_id == kAudioFileStreamProperty_DataFormat) {
             _streamDesc = buff;
             
-            // FIXME: what if data format is never acquired?
-            //        check error.
-            // AudioQueueNewOutput(_streamDesc, audioqueue_output_cb, (__bridge void *)(self), NULL, NULL, 0, &aqRef);
+            @synchronized(self) {
+                if (_playerPlaying && _aq == NULL) {
+                    // FIXME: check error.
+                    AudioQueueNewOutput(_streamDesc, aq_new_buffer_cb, (__bridge void *)(self), NULL, NULL, 0, &_aq);
+                    for (int i = 0; i < AQBUF_N; i++) {
+                        AudioQueueAllocateBuffer(_aq, AQBUF_DEFAULT_SIZE, &_aqBufs[i]);
+                        [_emptyQueueBuffers addObject:[NSData dataWithBytes:&_aqBufs[i] length:sizeof(AudioQueueBufferRef)]];
+                    }
+                    
+                    NSLog(@"\n-> audio queues created in properties' callback");
+                }
+            }
             
             return; // don't free _streamDesc!
         } else if (ppt_id == kAudioFileStreamProperty_BitRate) {
@@ -193,6 +334,81 @@ static void afs_properties_cb(void                         *inClientData,
         // farewell!
         if (buff != NULL) {
             free(buff);
+        }
+    }
+}
+
+- (void)onNewEmptyQueueBufferReceived:(AudioQueueRef)inAQ buffer:(AudioQueueBufferRef)inBuffer {
+    @autoreleasepool {
+        @synchronized(self) {
+            NSData *d = [NSData dataWithBytes:&inBuffer length:sizeof(AudioQueueBufferRef)];
+            [_emptyQueueBuffers addObject:d];
+        }
+        [self feedL1];
+    }
+}
+
+- (void)feedL1 {
+    @synchronized(self) {
+        // NSLog(@"\n-> feedL1 called!!"); // DEBUG
+        while (_l2_curIdx + 1 < [_parsedPackets count] && [_emptyQueueBuffers count] > 0) {
+            AudioQueueBufferRef aqbuf = *(AudioQueueBufferRef *)[(NSData *)[_emptyQueueBuffers objectAtIndex:0] bytes];
+            [_emptyQueueBuffers removeObjectAtIndex:0];
+            aqbuf->mAudioDataByteSize = 0;
+            
+            NSData *next_packet = [_parsedPackets objectAtIndex:(_l2_curIdx + 1)];
+            if (aqbuf->mAudioDataBytesCapacity < [next_packet length]) {
+                int cur_buf_idx = -1;
+                for (int i = 0; i < AQBUF_N; i++) {
+                    if (_aqBufs[i] == aqbuf) {
+                        cur_buf_idx = i;
+                        break;
+                    }
+                }
+                AudioQueueFreeBuffer(_aq, _aqBufs[cur_buf_idx]);
+                AudioQueueAllocateBuffer(_aq, (UInt32)[next_packet length], &aqbuf);
+                _aqBufs[cur_buf_idx] = aqbuf;
+            }
+            
+            // while (next_packet != nil &&
+            //        aqbuf->mAudioDataByteSize + [next_packet length] <= aqbuf->mAudioDataBytesCapacity) {
+            //     memcpy(aqbuf->mAudioData + aqbuf->mAudioDataByteSize,
+            //            [next_packet bytes], [next_packet length]);
+            //     aqbuf->mAudioDataByteSize += [next_packet length];
+            //
+            //     _l2_curIdx++;
+            //     if (_l2_curIdx + 1 < [_parsedPackets count]) {
+            //         next_packet = [_parsedPackets objectAtIndex:(_l2_curIdx + 1)];
+            //     } else {
+            //         next_packet = nil;
+            //     }
+            // }
+            
+            memcpy(aqbuf->mAudioData, [next_packet bytes], [next_packet length]);
+            aqbuf->mAudioDataByteSize = (UInt32)[next_packet length];
+            const AudioStreamPacketDescription *desc = [[_packetsDesc objectAtIndex:(_l2_curIdx + 1)] bytes];
+            
+            AudioQueueEnqueueBuffer(_aq, aqbuf, 1, desc);
+            _l2_curIdx++;
+            
+            // NSLog(@"\n-> new audio buffer filled & enqueued"); // DEBUG
+            
+            if (_playerPlaying && _audioQueuePaused) {
+                AudioQueueStart(_aq, NULL);
+                _audioQueuePaused = NO;
+            }
+        }
+        
+        if (_l2_curIdx + 1 == [_parsedPackets count] && [_emptyQueueBuffers count] == AQBUF_N) {
+            if (_playerPlaying && !_audioQueuePaused) {
+                AudioQueuePause(_aq);
+                _audioQueuePaused = YES;
+                if (_finishedFeedingParser) {
+                    _playerPlaying = NO;
+                    _l2_curIdx = -1;
+                    [_delegate onPlayingFinished:self];
+                }
+            }
         }
     }
 }
@@ -259,8 +475,18 @@ static void afs_properties_cb(void                         *inClientData,
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
     if (connection != _connection) { return; }
-    
-    [_delegate onStreamingFinished:self];
+    @synchronized(self) {
+        _finishedFeedingParser = YES;
+
+        _connection = nil;
+        [_delegate onStreamingFinished:self];
+        
+        if (_playerPlaying && _audioQueuePaused) {
+            _playerPlaying = NO;
+            _l2_curIdx = -1;
+            [_delegate onPlayingFinished:self];
+        }
+    }
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {

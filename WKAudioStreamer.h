@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 
-#define AQBUF_N  3
+#define AQBUF_N  5
 #define AQBUF_DEFAULT_SIZE  0x25000 // 160kb
 
 @protocol WKAudioStreamerDelegate;
@@ -22,11 +22,19 @@
     NSURLConnection *_connection;
     
     AudioFileStreamID _afsID;
-    // AudioQueueRef _aq;
-    // AudioQueueBufferRef _aqBufs[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
+    AudioQueueRef _aq;
+    AudioQueueBufferRef _aqBufs[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
     
     NSMutableArray *_emptyQueueBuffers;
     NSMutableArray *_parsedPackets;
+    NSMutableArray *_packetsDesc;
+    
+    BOOL _audioQueuePaused;
+    BOOL _playerPlaying;
+    BOOL _finishedFeedingParser;
+    BOOL _streamerRunning;
+    
+    int _l2_curIdx;
     
     int _fileSize;
     BOOL _finishedParsingHeader;
