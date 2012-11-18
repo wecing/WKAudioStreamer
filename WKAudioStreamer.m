@@ -7,6 +7,10 @@
 //
 
 #import "WKAudioStreamer.h"
+#import <AudioToolbox/AudioToolbox.h>
+
+#define AQBUF_N  5
+#define AQBUF_DEFAULT_SIZE  0x25000 // 160kb
 
 // WKAudioStreamer only stores the audio data part as parsed packets.
 // Clients could get the original full data (including audio header, ...) with the delegate method onDataReceived:availFrom:to.
@@ -75,7 +79,41 @@
 //         send onPlayerFinished to delegate
 
 
-@interface WKAudioStreamer ()
+@interface WKAudioStreamer () {
+@private
+    id<WKAudioStreamerDelegate> _delegate;
+    NSString *_url;
+    
+    NSURLConnection *_connection;
+    
+    AudioFileStreamID _afsID;
+    AudioQueueRef _aq;
+    AudioQueueBufferRef _aqBufs[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
+    
+    NSMutableArray *_emptyQueueBuffers;
+    NSMutableArray *_parsedPackets;
+    NSMutableArray *_packetsDesc;
+    
+    BOOL _audioQueuePaused;
+    BOOL _playerPlaying;
+    BOOL _finishedFeedingParser;
+    BOOL _streamerRunning;
+    
+    // BOOL _playerReady;
+    // BOOL _deferedPause;
+    
+    int _l2_curIdx;
+    
+    int _fileSize;
+    BOOL _finishedParsingHeader;
+    AudioStreamBasicDescription *_streamDesc;
+    
+    unsigned int _packetCount;
+    unsigned int _frameCount;
+    UInt32 _bitRate;
+    SInt64 _dataOffset;
+}
+
 // callbacks
 - (void)onParsedPacketsReceived:(const void *)d
                   audioDataSize:(UInt32)d_size

@@ -7,48 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <AudioToolbox/AudioToolbox.h>
-
-#define AQBUF_N  5
-#define AQBUF_DEFAULT_SIZE  0x25000 // 160kb
 
 @protocol WKAudioStreamerDelegate;
 
-@interface WKAudioStreamer : NSObject {
-@private
-    id<WKAudioStreamerDelegate> _delegate;
-    NSString *_url;
-    
-    NSURLConnection *_connection;
-    
-    AudioFileStreamID _afsID;
-    AudioQueueRef _aq;
-    AudioQueueBufferRef _aqBufs[AQBUF_N]; // FIXME: remember to call AudioQueueFreeBuffer().
-    
-    NSMutableArray *_emptyQueueBuffers;
-    NSMutableArray *_parsedPackets;
-    NSMutableArray *_packetsDesc;
-    
-    BOOL _audioQueuePaused;
-    BOOL _playerPlaying;
-    BOOL _finishedFeedingParser;
-    BOOL _streamerRunning;
-    
-    // BOOL _playerReady;
-    // BOOL _deferedPause;
-    
-    int _l2_curIdx;
-    
-    int _fileSize;
-    BOOL _finishedParsingHeader;
-    AudioStreamBasicDescription *_streamDesc;
-    
-    unsigned int _packetCount;
-    unsigned int _frameCount;
-    UInt32 _bitRate;
-    SInt64 _dataOffset;
-}
-
+@interface WKAudioStreamer : NSObject
 // streaming will not start right after the streamer is created.
 // the user would have to call startStreaming by hand.
 + (id)streamerWithURLString:(NSString *)url
