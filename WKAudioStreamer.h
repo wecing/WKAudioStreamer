@@ -34,6 +34,9 @@
     BOOL _finishedFeedingParser;
     BOOL _streamerRunning;
     
+    // BOOL _playerReady;
+    // BOOL _deferedPause;
+    
     int _l2_curIdx;
     
     int _fileSize;
@@ -62,6 +65,8 @@
 
 - (void)startStreaming;
 
+- (NSString *)requestedURL;
+
 @end
 
 ////////////////////////////////////////////////
@@ -71,6 +76,7 @@
 @protocol WKAudioStreamerDelegate <NSObject>
 
 @required
+// - (void)onPlayerReady:(WKAudioStreamer *)streamer;
 - (void)onStreamingFinished:(WKAudioStreamer *)streamer;
 - (void)onPlayingFinished:(WKAudioStreamer *)streamer;
 

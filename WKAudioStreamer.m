@@ -136,6 +136,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
     return streamer;
 }
 
+- (NSString *)requestedURL {
+    return _url;
+}
+
 - (id)init {
     self = [super init];
     if (self != nil) {        
@@ -202,6 +206,12 @@ static void aq_new_buffer_cb(void                 *inUserData,
 }
 
 - (void)pause {
+    // pause will still work even if:
+    //     1. the streamer is still streaming the header; or
+    //     2. play is not called previously.
+    //
+    // because we check _playerPlaying first. it would not be YES if play is not called previously; and
+    // after play, we are 100% sure that audio queue is created; so pause _aq should have no problem at all.
     @synchronized(self) {
         if (_playerPlaying) {
             if (!_audioQueuePaused) {
@@ -293,7 +303,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
             
             NSLog(@"\n-> finished parsing header."); // DEBUG
             
-            NSLog(@"\n-> audio duration: %lfs", [self duration]);
+            NSLog(@"\n-> audio duration: %.2lfs", [self duration]); // DEBUG
+            
+            // _playerReady = YES;
+            // [_delegate onPlayerReady:self];
             
             // FIXME: if streamDesc == nil, fail
             
