@@ -113,6 +113,8 @@
     SInt64 _dataOffset;
 }
 
+- (double)audioBytesPlayedToAudioPosition;
+
 // callbacks
 - (void)onParsedPacketsReceived:(const void *)d
                   audioDataSize:(UInt32)d_size
@@ -259,11 +261,27 @@ static void aq_new_buffer_cb(void                 *inUserData,
     return NO;
 }
 
+// this method is "private".
+- (double)audioBytesPlayedToAudioPosition {
+    UInt32 bit_rate = [self bitRate];
+    
+    if (bit_rate != 0) {
+        return _playedAudioBytes * 1.0 / bit_rate * 8;
+    }
+
+    return 0.0;
+}
+
 - (double)duration {
-    if (_fileSize != 0 && _dataOffset != -1) {
-        return (_fileSize - _dataOffset) / [self bitRate] * 8;
+    UInt32 bit_rate = [self bitRate];
+    if (_fileSize != 0 && _dataOffset != -1 && bit_rate != 0) {
+        return (_fileSize - _dataOffset) * 1.0 / bit_rate * 8;
     }
     return 0.0;
+}
+
+- (int)fileSize {
+    return _fileSize;
 }
 
 - (void)startStreaming {
@@ -308,6 +326,8 @@ static void aq_new_buffer_cb(void                 *inUserData,
         _resumeStreamingFrom = 0;
         _playedAudioBytes = 0;
         _finishedFeedingParser = NO;
+        
+        [_delegate onPlayerPosChanged:self pos:0.0];
 
         NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:_url]];
         [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
@@ -502,6 +522,8 @@ static void aq_new_buffer_cb(void                 *inUserData,
             AudioQueueEnqueueBuffer(_aq, aqbuf, 1, desc);
             _l2_curIdx++;
             _playedAudioBytes += [next_packet length];
+            
+            [_delegate onPlayerPosChanged:self pos:[self audioBytesPlayedToAudioPosition]];
             
             // NSLog(@"\n-> new audio buffer filled & enqueued"); // DEBUG
             

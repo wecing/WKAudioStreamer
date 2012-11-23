@@ -13,6 +13,7 @@
 
 @property IBOutlet NSTextField *urlField;
 @property IBOutlet NSButton *toggleButton;
+@property IBOutlet NSSlider *playerPosSlider;
 
 - (IBAction)play:(id)sender;
 

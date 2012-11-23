@@ -98,4 +98,22 @@ static WKAudioStreamer *as = nil;
     NSLog(@"\n-> %@", error);
 }
 
+- (void)onPlayerPosChanged:(WKAudioStreamer *)streamer
+                       pos:(double)pos {
+    NSSlider *slider = [self playerPosSlider];
+    double slider_value = 0;
+    if ([streamer duration] != 0) {
+        slider_value = pos * 100.0 / [streamer duration];
+    }
+    
+    // why?
+    if (slider_value < 0.0) {
+        slider_value = 0.0;
+    } else if (slider_value > 100.0) {
+        slider_value = 100.0;
+    }
+    
+    [slider setDoubleValue:slider_value];
+}
+
 @end

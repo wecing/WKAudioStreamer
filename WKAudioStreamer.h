@@ -24,6 +24,7 @@
 - (BOOL)seek:(double)targetTime;
 
 - (double)duration;
+- (int)fileSize; // return 0 if file size is still unknown.
 
 // startStreaming will always start streaming from the beginning of file.
 - (void)startStreaming;
@@ -52,5 +53,7 @@
 @optional
 - (void)onErrorOccured:(WKAudioStreamer *)streamer
                  error:(NSError *)error;
+- (void)onPlayerPosChanged:(WKAudioStreamer *)streamer
+                       pos:(double)pos;
 
 @end
