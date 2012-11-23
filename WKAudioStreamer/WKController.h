@@ -16,4 +16,8 @@
 
 - (IBAction)play:(id)sender;
 
+- (IBAction)startStreaming:(id)sender;
+- (IBAction)pauseStreaming:(id)sender;
+- (IBAction)resumeStreaming:(id)sender;
+
 @end

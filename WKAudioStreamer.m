@@ -85,6 +85,8 @@
     NSString *_url;
     
     NSURLConnection *_connection;
+    NSUInteger _resumeStreamingFrom;
+    NSUInteger _playedAudioBytes;
     
     AudioFileStreamID _afsID;
     AudioQueueRef _aq;
@@ -98,9 +100,6 @@
     BOOL _playerPlaying;
     BOOL _finishedFeedingParser;
     BOOL _streamerRunning;
-    
-    // BOOL _playerReady;
-    // BOOL _deferedPause;
     
     int _l2_curIdx;
     
@@ -180,13 +179,11 @@ static void aq_new_buffer_cb(void                 *inUserData,
 
 - (id)init {
     self = [super init];
-    if (self != nil) {        
+    if (self != nil) {
+        // L1.
         _emptyQueueBuffers = [NSMutableArray new];
-        _parsedPackets = [NSMutableArray new];
-        _packetsDesc = [NSMutableArray new];
         
         _dataOffset = -1;
-        _l2_curIdx = -1;
         
         _audioQueuePaused = YES;
     }
@@ -194,13 +191,9 @@ static void aq_new_buffer_cb(void                 *inUserData,
 }
 
 - (void)dealloc {
-    // if (_aq) {
-    //     for (int i = 0; i < AQBUF_N; i++) {
-    //         if (_aqBufs[i]) {
-    //             AudioQueueFreeBuffer(_aq, _aqBufs[i]);
-    //         }
-    //     }
-    // }
+    if (_aq) {
+        AudioQueueDispose(_aq, true);
+    }
     
     if (_afsID) {
         AudioFileStreamClose(_afsID);
@@ -276,15 +269,82 @@ static void aq_new_buffer_cb(void                 *inUserData,
 - (void)startStreaming {
     @synchronized(self) {
         if (_connection != nil) {
-            return;
+            [self pauseStreaming];
         }
+        
+        if (_aq) {
+            AudioQueuePause(_aq);
+            _audioQueuePaused = YES;
+            _playerPlaying = NO;
+            
+            // for (int i = 0; i < AQBUF_N; i++) {
+            //     AudioQueueBufferRef aqbuf = *(AudioQueueBufferRef *)[(NSData *)[_emptyQueueBuffers objectAtIndex:i] bytes];
+            //     AudioQueueFreeBuffer(_aq, aqbuf);
+            // }
+
+            AudioQueueDispose(_aq, true);
+            
+            for (int i = 0; i < AQBUF_N; i++) {
+                // NSLog(@"%d", _aqBufs[i]->mAudioDataBytesCapacity);
+                AudioQueueFreeBuffer(_aq, _aqBufs[i]);
+            }
+            
+            _aq = NULL;
+        }
+        
         if (!_afsID) {
             // FIXME: add error checking
             AudioFileStreamOpen((__bridge void *)self, afs_properties_cb, afs_audio_data_cb, 0, &_afsID);
         }
+        
+        // L1.
+        [_emptyQueueBuffers removeAllObjects];
+        
+        // L2.
+        _parsedPackets = [NSMutableArray new];
+        _packetsDesc = [NSMutableArray new];
+        _l2_curIdx = -1;
+        
+        _resumeStreamingFrom = 0;
+        _playedAudioBytes = 0;
+        _finishedFeedingParser = NO;
 
         NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:_url]];
         [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
+        _connection = [NSURLConnection connectionWithRequest:req delegate:self];
+    }
+}
+
+- (void)pauseStreaming {
+    @synchronized(self) {
+        if (_connection == nil) {
+            return;
+        }
+        
+        [_connection cancel];
+        _connection = nil;
+    }
+}
+
+- (void)resumeStreaming {
+    @synchronized(self) {
+        // I will just assume nobody will call resumeStreaming before startStreaming or play...
+        if (_connection != nil) {
+            return;
+        }
+        
+        NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:_url]];
+        [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
+        
+        // if _resumeStreamingFrom is not zero, it means seek is already called -- which means 
+        // _fileSize should not be zero as well.
+        //
+        // but, well, it doesn't harm...
+        if (_fileSize != 0 && _resumeStreamingFrom != 0) {
+            NSString *range = [NSString stringWithFormat:@"bytes=%ld-%d", _resumeStreamingFrom, _fileSize];
+            [req addValue:range forHTTPHeaderField:@"Range"];
+        }
+        
         _connection = [NSURLConnection connectionWithRequest:req delegate:self];
     }
 }
@@ -441,6 +501,7 @@ static void aq_new_buffer_cb(void                 *inUserData,
             
             AudioQueueEnqueueBuffer(_aq, aqbuf, 1, desc);
             _l2_curIdx++;
+            _playedAudioBytes += [next_packet length];
             
             // NSLog(@"\n-> new audio buffer filled & enqueued"); // DEBUG
             
@@ -517,40 +578,66 @@ static void aq_new_buffer_cb(void                 *inUserData,
 //
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-    if (connection != _connection) { return; }
+    @synchronized(self) {
+        if (connection != _connection) {
+            return;
+        }
+        
+        // FIXME: on seeking forward the last parameter has to be kAudioFileStreamParseFlag_Discontinuity.
+        AudioFileStreamParseBytes(_afsID, (UInt32)[data length], [data bytes], 0);
+        _resumeStreamingFrom += [data length];
+    }
     
-    // FIXME: on seeking forward the last parameter has to be kAudioFileStreamParseFlag_Discontinuity.
-    AudioFileStreamParseBytes(_afsID, (UInt32)[data length], [data bytes], 0);
     [_delegate onDataReceived:self data:data];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    if (connection != _connection) { return; }
+    BOOL send_playing_finished = NO;
+    
     @synchronized(self) {
+        if (connection != _connection) {
+            return;
+        }
         _finishedFeedingParser = YES;
 
         _connection = nil;
-        [_delegate onStreamingFinished:self];
+        
         
         if (_playerPlaying && _audioQueuePaused) {
             _playerPlaying = NO;
             _l2_curIdx = -1;
-            [_delegate onPlayingFinished:self];
+            send_playing_finished = YES;
         }
+    }
+    
+    [_delegate onStreamingFinished:self];
+    if (send_playing_finished) {
+        [_delegate onPlayingFinished:self];
     }
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    if (connection != _connection) { return; }
+    @synchronized(self) {
+        if (connection != _connection) {
+            return;
+        }
+        
+        _connection = nil;
+    }
     
-    _connection = nil;
     [_delegate onErrorOccured:self error:error];
 }
 
 // get response header from the server.
 // used for getting the file size.
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-    if (connection != _connection) { return; }
+    if (connection != _connection) {
+        return;
+    }
+    
+    if (_fileSize != 0) {
+        return;
+    }
     
     NSDictionary *d = [(NSHTTPURLResponse *)response allHeaderFields];
     NSString *content_length_string = [d objectForKey:@"Content-Length"];

@@ -18,7 +18,7 @@ static WKAudioStreamer *as = nil;
 
 - (IBAction)play:(id)sender {
     NSString *url = [[self urlField] stringValue];
-    if (as == nil && ![url isEqualToString:[as requestedURL]]) {
+    if (as == nil || ![url isEqualToString:[as requestedURL]]) {
         NSLog(@"\n-> requested url: %@", url); // DEBUG
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         [as startStreaming];
@@ -39,6 +39,31 @@ static WKAudioStreamer *as = nil;
         NSLog(@"\n-> paused!"); // DEBUG
     }
 }
+
+- (IBAction)startStreaming:(id)sender {
+    NSString *url = [[self urlField] stringValue];
+    if (as == nil || ![url isEqualToString:[as requestedURL]]) {
+        as = [WKAudioStreamer streamerWithURLString:url delegate:self];
+        NSLog(@"\n-> requested url: %@", url); // DEBUG
+    }
+    
+    [as startStreaming];
+    NSLog(@"\n-> streaming started."); // DEBUG
+    
+    NSButton *but = [self toggleButton];
+    if ([[but title] isEqualToString:@"Pause"]) {
+        [but setTitle:@"Play"];
+    }
+}
+
+- (IBAction)pauseStreaming:(id)sender {
+    [as pauseStreaming];
+}
+
+- (IBAction)resumeStreaming:(id)sender {
+    [as resumeStreaming];
+}
+
 
 /////////////////////////////////////////////////
 //////////////// delegate methods ///////////////
