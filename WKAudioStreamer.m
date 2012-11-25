@@ -581,6 +581,7 @@ static void aq_new_buffer_cb(void                 *inUserData,
                 if (_finishedFeedingParser) {
                     _playerPlaying = NO;
                     _l2_curIdx = -1;
+                    _playedAudioBytes = 0;
                     [_delegate onPlayingFinished:self];
                 }
             }
@@ -669,6 +670,7 @@ static void aq_new_buffer_cb(void                 *inUserData,
         if (_playerPlaying && _audioQueuePaused) {
             _playerPlaying = NO;
             _l2_curIdx = -1;
+            _playedAudioBytes = 0;
             send_playing_finished = YES;
         }
     }
