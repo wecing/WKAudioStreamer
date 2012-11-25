@@ -102,6 +102,8 @@
     BOOL _finishedFeedingParser;
     BOOL _streamerRunning;
     
+    BOOL _restartStreamingNeverCalled;
+    
     int _l2_curIdx;
     
     int _fileSize;
@@ -189,6 +191,7 @@ static void aq_new_buffer_cb(void                 *inUserData,
         _dataOffset = -1;
         
         _audioQueuePaused = YES;
+        _restartStreamingNeverCalled = YES;
     }
     return self;
 }
@@ -307,11 +310,13 @@ static void aq_new_buffer_cb(void                 *inUserData,
     return _fileSize;
 }
 
-- (void)startStreaming {
+- (void)restartStreaming {
     @synchronized(self) {
         if (_connection != nil) {
             [self pauseStreaming];
         }
+        
+        _restartStreamingNeverCalled = NO;
         
         if (_aq) {
             AudioQueuePause(_aq);
@@ -372,10 +377,14 @@ static void aq_new_buffer_cb(void                 *inUserData,
     }
 }
 
-- (void)resumeStreaming {
+- (void)startStreaming {
     @synchronized(self) {
         // I will just assume nobody will call resumeStreaming before startStreaming or play...
-        if (_connection != nil) {
+        if (_connection != nil || _finishedFeedingParser) {
+            return;
+        }
+        if (_restartStreamingNeverCalled) {
+            [self restartStreaming];
             return;
         }
         
@@ -393,6 +402,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
         
         _connection = [NSURLConnection connectionWithRequest:req delegate:self];
     }
+}
+
+- (BOOL)streamingFinished {
+    return _finishedFeedingParser;
 }
 
 //

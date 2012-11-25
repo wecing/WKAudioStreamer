@@ -40,14 +40,17 @@ static WKAudioStreamer *as = nil;
     }
 }
 
-- (IBAction)startStreaming:(id)sender {
+- (IBAction)restartStreaming:(id)sender {
     NSString *url = [[self urlField] stringValue];
     if (as == nil || ![url isEqualToString:[as requestedURL]]) {
+        if (as != nil) {
+            [as pauseStreaming];
+        }
         as = [WKAudioStreamer streamerWithURLString:url delegate:self];
         NSLog(@"\n-> requested url: %@", url); // DEBUG
     }
     
-    [as startStreaming];
+    [as restartStreaming];
     NSLog(@"\n-> streaming started."); // DEBUG
     
     NSButton *but = [self toggleButton];
@@ -60,8 +63,12 @@ static WKAudioStreamer *as = nil;
     [as pauseStreaming];
 }
 
-- (IBAction)resumeStreaming:(id)sender {
-    [as resumeStreaming];
+- (IBAction)startStreaming:(id)sender {
+    if (as != nil) {
+        [as startStreaming];
+    } else {
+        [self restartStreaming:nil];
+    }
 }
 
 - (IBAction)onSliderValueChanged:(id)sender {

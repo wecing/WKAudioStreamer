@@ -28,11 +28,12 @@
 
 // startStreaming will always start streaming from the beginning of file.
 - (void)startStreaming;
-
 - (void)pauseStreaming;
-- (void)resumeStreaming;
+
+- (void)restartStreaming;
 
 - (NSString *)requestedURL;
+- (BOOL)streamingFinished;
 
 @end
 

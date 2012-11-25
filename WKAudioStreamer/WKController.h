@@ -19,7 +19,8 @@
 
 - (IBAction)startStreaming:(id)sender;
 - (IBAction)pauseStreaming:(id)sender;
-- (IBAction)resumeStreaming:(id)sender;
+
+- (IBAction)restartStreaming:(id)sender;
 
 - (IBAction)onSliderValueChanged:(id)sender;
 
