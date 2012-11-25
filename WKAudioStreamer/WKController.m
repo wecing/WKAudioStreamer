@@ -64,6 +64,17 @@ static WKAudioStreamer *as = nil;
     [as resumeStreaming];
 }
 
+- (IBAction)onSliderValueChanged:(id)sender {
+    double slider_value = [[self playerPosSlider] doubleValue];
+    double duration = [as duration];
+    if (duration > 0.0) {
+        double target_time = slider_value / 100.0 * duration;
+        [as seek:target_time];
+        
+        NSLog(@"\n-> seeking to: %f", target_time);
+    }
+}
+
 
 /////////////////////////////////////////////////
 //////////////// delegate methods ///////////////

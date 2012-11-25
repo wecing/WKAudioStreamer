@@ -21,4 +21,6 @@
 - (IBAction)pauseStreaming:(id)sender;
 - (IBAction)resumeStreaming:(id)sender;
 
+- (IBAction)onSliderValueChanged:(id)sender;
+
 @end

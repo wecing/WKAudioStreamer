@@ -87,6 +87,7 @@
     NSURLConnection *_connection;
     NSUInteger _resumeStreamingFrom;
     NSUInteger _playedAudioBytes;
+    NSUInteger _streamingStartedFrom;
     
     AudioFileStreamID _afsID;
     AudioQueueRef _aq;
@@ -257,6 +258,28 @@ static void aq_new_buffer_cb(void                 *inUserData,
 }
 
 - (BOOL)seek:(double)targetTime {
+    //if (_fileSize == 0 || _dataOffset == -1) {
+    //    return NO;
+    //}
+    //UInt32 bit_rate = [self bitRate];
+    //Float64 average_bytes_per_packet;
+    //UInt32 ppt_size = sizeof(Float64);
+    //// FIXME: error checking
+    //AudioFileStreamGetProperty(_afsID, kAudioFileStreamProperty_AverageBytesPerPacket, &ppt_size, &average_bytes_per_packet);
+    //
+    //if (average_bytes_per_packet <= 0 || bit_rate == 0) {
+    //    return NO;
+    //}
+    //
+    //NSLog(@"\n-> seek requested: %f", targetTime); // DEBUG
+    //
+    //UInt32 target_byte = targetTime / 8 * bit_rate;
+    //if (_streamingStartedFrom <= target_byte && target_byte <= _resumeStreamingFrom) {
+    //    // FIXME
+    //} else {
+    //    // FIXME
+    //}
+    
     // FIXME
     return NO;
 }
@@ -325,9 +348,12 @@ static void aq_new_buffer_cb(void                 *inUserData,
         
         _resumeStreamingFrom = 0;
         _playedAudioBytes = 0;
+        _streamingStartedFrom = 0;
         _finishedFeedingParser = NO;
         
-        [_delegate onPlayerPosChanged:self pos:0.0];
+        if ([_delegate respondsToSelector:@selector(onPlayerPosChanged:pos:)]) {
+            [_delegate onPlayerPosChanged:self pos:0.0];
+        }
 
         NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:_url]];
         [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
@@ -523,7 +549,9 @@ static void aq_new_buffer_cb(void                 *inUserData,
             _l2_curIdx++;
             _playedAudioBytes += [next_packet length];
             
-            [_delegate onPlayerPosChanged:self pos:[self audioBytesPlayedToAudioPosition]];
+            if ([_delegate respondsToSelector:@selector(onPlayerPosChanged:pos:)]) {
+                [_delegate onPlayerPosChanged:self pos:[self audioBytesPlayedToAudioPosition]];
+            }
             
             // NSLog(@"\n-> new audio buffer filled & enqueued"); // DEBUG
             
@@ -646,8 +674,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
         
         _connection = nil;
     }
-    
-    [_delegate onErrorOccured:self error:error];
+
+    if ([_delegate respondsToSelector:@selector(onErrorOccured:error:)]) {
+        [_delegate onErrorOccured:self error:error];
+    }
 }
 
 // get response header from the server.
