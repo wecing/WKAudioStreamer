@@ -102,6 +102,8 @@
     BOOL _finishedFeedingParser;
     BOOL _streamerRunning;
     
+    BOOL _playerBlocked; // waiting for incoming data
+    
     BOOL _restartStreamingNeverCalled;
     
     int _l2_curIdx;
@@ -133,6 +135,9 @@
 - (UInt32)bitRate;
 - (Float64)framesPerPacket;
 - (Float64)bytesPerPacket;
+
+- (void)sendBlocked;
+- (void)sendBlockingEnded;
 @end
 
 static void afs_audio_data_cb(void                          *inClientData,
@@ -323,6 +328,8 @@ static void aq_new_buffer_cb(void                 *inUserData,
         
         _restartStreamingNeverCalled = NO;
         
+        [self sendBlocked];
+        
         if (_aq) {
             AudioQueuePause(_aq);
             _audioQueuePaused = YES;
@@ -393,6 +400,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
             return;
         }
         
+        if (_l2_curIdx + 1 == [_parsedPackets count]) {
+            [self sendBlocked];
+        }
+        
         NSMutableURLRequest *req = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:_url]];
         [req setValue:@"" forHTTPHeaderField:@"User-Agent"];
         
@@ -412,6 +423,29 @@ static void aq_new_buffer_cb(void                 *inUserData,
 - (BOOL)streamingFinished {
     return _finishedFeedingParser;
 }
+
+- (BOOL)isPlayerBlocking {
+    return _playerBlocked;
+}
+
+- (void)sendBlocked {
+    if (!_playerBlocked) {
+        _playerBlocked = YES;
+        if ([_delegate respondsToSelector:@selector(onPlayerBlocked:)]) {
+            [_delegate onPlayerBlocked:self];
+        }
+    }
+}
+
+- (void)sendBlockingEnded {
+    if (_playerBlocked) {
+        _playerBlocked = NO;
+        if ([_delegate respondsToSelector:@selector(onPlayerBlockingEnded:)]) {
+            [_delegate onPlayerBlockingEnded:self];
+        }
+    }
+}
+
 
 //
 // afs callbacks
@@ -442,6 +476,8 @@ static void aq_new_buffer_cb(void                 *inUserData,
                 AudioStreamPacketDescription *ds = (AudioStreamPacketDescription *)[d bytes];
                 ds->mStartOffset = 0;
                 [_packetsDesc addObject:d];
+                
+                [self sendBlockingEnded];
             }
         }
         [self feedL1];
@@ -588,6 +624,9 @@ static void aq_new_buffer_cb(void                 *inUserData,
                     _l2_curIdx = -1;
                     _playedAudioBytes = 0;
                     [_delegate onPlayingFinished:self];
+                    [self sendBlockingEnded];
+                } else {
+                    [self sendBlocked];
                 }
             }
         }

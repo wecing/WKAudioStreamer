@@ -36,6 +36,8 @@
 - (NSString *)requestedURL;
 - (BOOL)streamingFinished;
 
+- (BOOL)isPlayerBlocking;
+
 @end
 
 ////////////////////////////////////////////////
@@ -57,5 +59,8 @@
                  error:(NSError *)error;
 - (void)onPlayerPosChanged:(WKAudioStreamer *)streamer
                        pos:(double)pos;
+
+- (void)onPlayerBlocked:(WKAudioStreamer *)streamer;
+- (void)onPlayerBlockingEnded:(WKAudioStreamer *)streamer;
 
 @end
