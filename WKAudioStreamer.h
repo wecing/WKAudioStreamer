@@ -16,8 +16,9 @@
 + (id)streamerWithURLString:(NSString *)url
                    delegate:(id<WKAudioStreamerDelegate>)delegate;
 
-- (void)play;
-- (void)pause;
+// return YES on success.
+- (BOOL)play;
+- (BOOL)pause;
 
 // if seek returns YES, it means later data received by the delegate will not be continuous
 // with the previous ones -- which means you cannot save them onto your disk as a single file anymore.

@@ -210,10 +210,10 @@ static void aq_new_buffer_cb(void                 *inUserData,
     }
 }
 
-- (void)play {
+- (BOOL)play {
     @synchronized(self) {
         if (_playerPlaying) {
-            return;
+            return NO;
         }
         
         if (_connection == nil && !_finishedFeedingParser) {
@@ -239,10 +239,12 @@ static void aq_new_buffer_cb(void                 *inUserData,
             AudioQueueStart(_aq, NULL);
             _audioQueuePaused = NO;
         }
+        
+        return YES;
     }
 }
 
-- (void)pause {
+- (BOOL)pause {
     // pause will still work even if:
     //     1. the streamer is still streaming the header; or
     //     2. play is not called previously.
@@ -256,6 +258,9 @@ static void aq_new_buffer_cb(void                 *inUserData,
                 _audioQueuePaused = YES;
             }
             _playerPlaying = NO;
+            return YES;
+        } else {
+            return NO;
         }
     }
 }
